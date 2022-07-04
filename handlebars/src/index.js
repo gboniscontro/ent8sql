@@ -3,13 +3,13 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const app = express();
 
-const { Contenedor, Producto } = require('./contenedor')
+const { Contenedor, Producto } = require('./contenedorsql')
 const path = require('path')
 
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
-let contenedor = new Contenedor('productos.txt')
+let contenedor = new Contenedor('sqlite')
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -18,14 +18,15 @@ app.use(express.static(path.join(__dirname, 'public')))
 app.set('view engine', 'hbs');
 app.set("views", path.join(__dirname, 'views'));
 
-
-app.post('/productos', (req, res) => {
+/*
+app.post('/productos', async (req, res) => {
     const producto = req.body
-    contenedor.save(producto);
-    let productos = contenedor.getAll();
+    await contenedor.save(producto);
+    let productos = await contenedor.getAll();
     io.sockets.emit('products', productos);
     res.redirect('/')
 })
+*/
 /*
 app.get('/productos', (req, res) => {
 
@@ -56,14 +57,14 @@ let messages = [
 ];
 
 
-io.on('connection', function (socket) {
+io.on('connection', async function (socket) {
     console.log('un usuario se ha conectado');
-    let productos = contenedor.getAll()
+    let productos = await contenedor.getAll()
     socket.emit('products', productos);
 
-    socket.on('new-product', function (data) {
-        contenedor.save(data);
-        let productos = contenedor.getAll()
+    socket.on('new-product', async function (data) {
+        await contenedor.save(data);
+        let productos = await contenedor.getAll()
         io.sockets.emit('products', productos);
     })
 
