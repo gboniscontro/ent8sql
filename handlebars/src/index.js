@@ -3,13 +3,14 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const app = express();
 
-const { Contenedor, Producto } = require('./contenedorsql')
+const { Contenedor, Producto, ContenedorMensaje } = require('./contenedorsql')
 const path = require('path')
 
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
-let contenedor = new Contenedor('sqlite')
+let contenedor = new Contenedor('sql')
+let contmensj = new ContenedorMensaje('sqlite')
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -49,12 +50,13 @@ app.get('api/productos', (req, res) => {
 
 
 app.use(express.static('public'));
-
+/*
 let messages = [
     { author: 'juan@gmail.com', text: '!hola! que tal?' },
     { author: 'jose@gmail.com', text: '!muy bien' },
     { author: 'Ana@gmail.com', text: '!Genial!' }
 ];
+*/
 
 
 io.on('connection', async function (socket) {
@@ -69,10 +71,12 @@ io.on('connection', async function (socket) {
     })
 
     console.log('emitimos chat');
+    let messages = await contmensj.getAll()
     socket.emit('messages', messages);
 
-    socket.on('new-message', function (data) {
-        messages.push(data);
+    socket.on('new-message', async function (data) {
+        await contmensj.save(data)
+        messages = await contmensj.getAll()
         io.sockets.emit('messages', messages);
     })
 

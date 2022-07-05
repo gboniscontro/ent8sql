@@ -38,9 +38,10 @@ function addProduct(e) {
 function render(data) {
   const html = data
     .map((elem) => {
-      return `<div>
-            <strong style="color:blue">${elem.author}</strong>
-            <em style="color:green">${elem.text}</em>
+      return `<div><em style="color:red">${elem.date}</em>
+            <strong style="color:blue">${elem.email}</strong>
+            <em style="color:green">${elem.message}</em>
+             
         </div>`;
     })
     .join(" ");
@@ -55,8 +56,8 @@ socket.on("messages", (data) => {
 });
 function addMessage(e) {
   const mensaje = {
-    author: document.getElementById("username").value,
-    text: document.getElementById("texto").value,
+    email: document.getElementById("username").value,
+    message: document.getElementById("texto").value,
   };
   socket.emit("new-message", mensaje);
   document.getElementById("texto").value = '';

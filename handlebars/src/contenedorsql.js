@@ -33,14 +33,17 @@ class Contenedor {
                 this.knex = require('knex')(optionssqlite3)
             }
 
-
-            this.knex.schema.createTable('productos', table => {
-                table.increments('id').primary().notNull(),
-                    table.string('title', 15).notNull(),
-                    table.float('price'),
-                    table.string('thumbnail')
-            }).then(console.log('creado')).catch(er => console.log(er))
-
+            this.knex.schema.hasTable('productos').then((existtable) => {
+                if (!existtable) {
+                    this.knex.schema.createTable('productos', table => {
+                        table.increments('id').primary().notNull(),
+                            table.string('title', 15).notNull(),
+                            table.float('price'),
+                            table.string('thumbnail')
+                    }).then(console.log('creado')).catch(er => console.log(er))
+                }
+            }
+            )
 
 
         }
@@ -184,4 +187,100 @@ class Contenedor {
     }
 
 }
-module.exports = { Contenedor, Producto }
+class ContenedorMensaje {
+    constructor(name) {
+        this.name = name
+        if (this.name == 'sql' || this.name == 'sqlite') {
+            if (this.name == 'sql') {
+                this.knex = require('knex')(optionssql);
+            } else {
+                this.knex = require('knex')(optionssqlite3)
+            }
+
+            this.knex.schema.hasTable('messages').then((existtable) => {
+                if (!existtable) {
+                    this.knex.schema.createTable('messages', table => {
+                        table.increments('id').primary().notNull(),
+                            table.string('message', 15).notNull(),
+                            table.string('date'),
+                            table.string('email')
+                    }).then(console.log('creado')).catch(er => console.log(er))
+                }
+            })
+
+
+        }
+        else
+            try {
+
+                this.messages = fs.readFileSync(name, '', 'utf-8')
+                this.messages = JSON.parse(this.messages)
+                console.log('archivo leido')
+
+            } catch (error) {
+                //console.log(error)  
+                this.messages = []
+                console.log('archivo no leido')
+            }
+    }
+    async getAll() {
+        if (this.name == 'sqlite' || this.name == 'sql') {
+            try {
+
+                const arts = await this.knex.from('messages').select('*');
+                this.messages = [];
+                for (let row of arts) {
+                    this.messages.push({ 'message': row.message, 'date': row.date, 'email': row.email, 'id': row.id })
+                    //console.log(`ID:${row.id} - NOMBRE:${row.nombre} - CODIGO:${row.codigo} - PRECIO:${row.precio} - STOCK:${row.stock}`)
+                }
+            }
+            catch (err) {
+                console.log(err)
+            }
+        }
+        return this.messages
+    }
+
+
+    async save(message) {
+        if (this.name == 'sqlite' || this.name == 'sql') {
+            try {
+                await this.knex.from('messages').insert({ 'message': message.message, 'date': new Date().toLocaleString("es-AR"), 'email': message.email })
+                // console.log(`El message con ID ${message.id} ha sido guardado`)
+
+
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        else
+            try {
+                let maxid = 0
+                /* if (this.messages.length > 0) {
+                     ids = this.messages.map(
+                         ({ id }) => (id))
+                     //console.log('ids', ids)
+                     id = Math.max(...ids) + 1
+                     //console.log('idmax', id)
+                 }*/
+                this.messages.forEach(
+                    ({ id }) => (maxid = maxid > id ? maxid : id))
+                message.id = maxid + 1
+                this.messages.push(message)
+                fs.promises.writeFile(this.name, JSON.stringify(this.messages, null, 2))
+                    .then(
+                        () =>
+                            console.log(`El message con ID ${message.id} ha sido guardado`)
+                    )
+                    .catch(
+                        (e) => console.log(e)
+                    )
+
+            } catch (error) {
+                console.log('error funcion save')
+            }
+    }
+
+
+}
+module.exports = { Contenedor, Producto, ContenedorMensaje }
