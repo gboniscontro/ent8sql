@@ -245,7 +245,7 @@ class ContenedorMensaje {
     async save(message) {
         if (this.name == 'sqlite' || this.name == 'sql') {
             try {
-                await this.knex.from('messages').insert({ 'message': message.message, 'date': new Date().toLocaleString("es-AR"), 'email': message.email })
+                await this.knex.from('messages').insert({ 'message': message.message, 'time': new Date().toLocaleString("es-AR"), 'email': message.email })
                 // console.log(`El message con ID ${message.id} ha sido guardado`)
 
 
